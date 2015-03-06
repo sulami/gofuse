@@ -7,7 +7,7 @@ type Fuse struct {
 	good bool
 
 	// Function to execute to try to get a positive response.
-	action func(*[]byte) ([]byte, error)
+	action func(*[]byte) (*[]byte, error)
 
 	// Function to execute in case bad (or good) things happen for
 	// logging purposes.
