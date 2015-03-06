@@ -68,9 +68,30 @@ func (f *Fuse) blow() {
 	// go f.recovery()
 }
 
+// Create and initialize a new fuse and return it.
+func NewFuse(action func(*[]byte) (*[]byte, error),
+             log func(string),
+             requestTimeout time.Duration,
+             requestTries uint,
+             recoveryInterval time.Duration,
+             recoveryTries uint) *Fuse {
+	f := new(Fuse)
+	if f == nil {
+		return nil
+	}
+
+	f.good = true
+	f.action = action
+	f.log = log
+	f.requestTimeout = requestTimeout
+	f.requestTries = requestTries
+	f.recoveryInterval = recoveryInterval
+	f.recoveryTries = recoveryTries
+
+	return f
+}
+
 // TODO
-// Everything that needs to be publicly visible, like
-// new fuse
 // set fuse options
 // query fuse status
 // delete fuse
