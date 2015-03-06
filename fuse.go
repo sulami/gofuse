@@ -44,8 +44,8 @@ func (f *Fuse) try() bool {
 
 // Recovery has succeeded, bring the fuse back online.
 func (f *Fuse) unblow() {
-	// f.recoverySuccesses = 0
-	// f.good = true
+	f.recoverySuccesses = 0
+	f.good = true
 }
 
 // Try to get query successes until we hit the threshold and unblow the

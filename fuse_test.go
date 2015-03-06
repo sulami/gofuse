@@ -41,9 +41,10 @@ func FauxAction(in *[]byte) (*[]byte, error) {
 func FauxLog(s string) {
 }
 
-// Test initialization of new fuses
+// Test initialization of new fuses.
 func TestNewFuse(t *testing.T) {
 	f := NewFuse(FauxAction, FauxLog, time.Second, 3, 2 * time.Second, 5)
+
 	if f == nil {
 		t.Error("Allocation failure.")
 	} else if !f.good {
@@ -63,15 +64,44 @@ func TestNewFuse(t *testing.T) {
 	}
 }
 
+// Test blowing of fuses.
 func TestBlowFuse(t *testing.T) {
 	f := NewFuse(FauxAction, FauxLog, time.Second, 3, 2 * time.Second, 5)
+
 	if !f.good {
 		t.Error("Fuse is already blown.")
 	}
+
 	f.blow()
+
 	if f.good {
 		t.Error("Fuse has not been blown.")
 	}
+
+	// TODO check for recovery status
+}
+
+// Test unblowing of fuses.
+func TestUnblowFuse(t *testing.T) {
+	f := NewFuse(FauxAction, FauxLog, time.Second, 3, 2 * time.Second, 5)
+
+	f.blow()
+
+	if f.good {
+		t.Error("Fuse has not been blown.")
+	}
+
+	// Emulate we already had a few successes for testing the reset.
+	f.recoverySuccesses = 2
+
+	f.unblow()
+
+	if !f.good {
+		t.Error("Fuse has not been unblown.")
+	} else if f.recoverySuccesses != 0 {
+		t.Error("recoverySuccesses have not been reset.")
+	}
+
 	// TODO check for recovery status
 }
 
