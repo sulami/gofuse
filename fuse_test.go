@@ -63,3 +63,15 @@ func TestNewFuse(t *testing.T) {
 	}
 }
 
+func TestBlowFuse(t *testing.T) {
+	f := NewFuse(FauxAction, FauxLog, time.Second, 3, 2 * time.Second, 5)
+	if !f.good {
+		t.Error("Fuse is already blown.")
+	}
+	f.blow()
+	if f.good {
+		t.Error("Fuse has not been blown.")
+	}
+	// TODO check for recovery status
+}
+

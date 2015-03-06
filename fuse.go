@@ -64,7 +64,7 @@ func (f *Fuse) recovery() {
 
 // Blow the fuse and initiate recovery.
 func (f *Fuse) blow() {
-	// f.good = false
+	f.good = false
 	// go f.recovery()
 }
 
