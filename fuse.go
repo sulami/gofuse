@@ -7,23 +7,21 @@ type Fuse struct {
 	good bool
 
 	// Function to execute to try to get a positive response.
-	// TODO proper type
-	action func()
+	action func(*[]byte) ([]byte, error)
 
 	// Function to execute in case bad (or good) things happen for
 	// logging purposes.
-	// TODO proper type
-	log func()
+	log func(string)
 
 	// Timout after which to call a query.
-	requestTimeout time.Time
+	requestTimeout time.Duration
 
 	// How often requests are allowed to time out before the fuse
 	// blows.
 	requestTries uint
 
 	// The interval in which we try to contact an offline fuse.
-	recoveryInterval time.Time
+	recoveryInterval time.Duration
 
 	// How often requests have to come back successfully before the
 	// fuse gets enabled again.
