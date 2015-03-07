@@ -1,6 +1,9 @@
 package fuse
 
-import "time"
+import (
+	"log"
+	"time"
+)
 
 type Fuse struct {
 	// Is this fuse currently blown?
@@ -9,9 +12,9 @@ type Fuse struct {
 	// Function to execute to try to get a positive response.
 	action func(*[]byte) (*[]byte, error)
 
-	// Function to execute in case bad (or good) things happen for
-	// logging purposes.
-	log func(string)
+	// Logger to use when logging anything on our own, eg. blown
+	// fusesg
+	log *log.Logger
 
 	// Timout after which to call a query.
 	requestTimeout time.Duration
@@ -70,7 +73,7 @@ func (f *Fuse) blow() {
 
 // Create and initialize a new fuse and return it.
 func NewFuse(action func(*[]byte) (*[]byte, error),
-             log func(string),
+             log *log.Logger,
              requestTimeout time.Duration,
              requestTries uint,
              recoveryInterval time.Duration,

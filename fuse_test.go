@@ -37,13 +37,10 @@ func FauxAction(in *[]byte) (*[]byte, error) {
 	}
 }
 
-// Faux log function that should probably do something.
-func FauxLog(s string) {
-}
-
 // Test initialization of new fuses.
 func TestNewFuse(t *testing.T) {
-	f := NewFuse(FauxAction, FauxLog, time.Second, 3, 2 * time.Second, 5)
+	// TODO use log.Logger
+	f := NewFuse(FauxAction, nil, time.Second, 3, 2 * time.Second, 5)
 
 	if f == nil {
 		t.Error("Allocation failure.")
@@ -51,7 +48,7 @@ func TestNewFuse(t *testing.T) {
 		t.Error("Fuse is bad.")
 	} else if f.action == nil {
 		t.Error("Action is nil.")
-	} else if f.log == nil {
+	} else if f.log != nil {
 		t.Error("Log is nil.")
 	} else if f.requestTimeout != time.Second {
 		t.Error("requestTimeout mismatch.")
@@ -66,7 +63,7 @@ func TestNewFuse(t *testing.T) {
 
 // Test blowing of fuses.
 func TestBlowFuse(t *testing.T) {
-	f := NewFuse(FauxAction, FauxLog, time.Second, 3, 2 * time.Second, 5)
+	f := NewFuse(FauxAction, nil, time.Second, 3, 2 * time.Second, 5)
 
 	if !f.good {
 		t.Error("Fuse is already blown.")
@@ -83,7 +80,7 @@ func TestBlowFuse(t *testing.T) {
 
 // Test unblowing of fuses.
 func TestUnblowFuse(t *testing.T) {
-	f := NewFuse(FauxAction, FauxLog, time.Second, 3, 2 * time.Second, 5)
+	f := NewFuse(FauxAction, nil, time.Second, 3, 2 * time.Second, 5)
 
 	f.blow()
 
