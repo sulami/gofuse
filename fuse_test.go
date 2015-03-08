@@ -48,8 +48,8 @@ func TestNewFuse(t *testing.T) {
 		t.Error("Fuse is bad.")
 	} else if f.action == nil {
 		t.Error("Action is nil.")
-	} else if f.log != nil {
-		t.Error("Log is nil.")
+	} else if f.logger == nil {
+		t.Error("Logger is nil.")
 	} else if f.requestTimeout != time.Second {
 		t.Error("requestTimeout mismatch.")
 	} else if f.requestTries != 3 {

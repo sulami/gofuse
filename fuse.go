@@ -1,6 +1,7 @@
 package fuse
 
 import (
+	"io"
 	"log"
 	"time"
 )
@@ -14,7 +15,7 @@ type Fuse struct {
 
 	// Logger to use when logging anything on our own, eg. blown
 	// fusesg
-	log *log.Logger
+	logger *log.Logger
 
 	// Timout after which to call a query.
 	requestTimeout time.Duration
@@ -71,9 +72,13 @@ func (f *Fuse) blow() {
 	// go f.recovery()
 }
 
+func (f *Fuse) log(msg string) {
+	f.logger.Print(msg)
+}
+
 // Create and initialize a new fuse and return it.
 func NewFuse(action func(*[]byte) (*[]byte, error),
-             log *log.Logger,
+             logwriter io.Writer,
              requestTimeout time.Duration,
              requestTries uint,
              recoveryInterval time.Duration,
@@ -85,7 +90,8 @@ func NewFuse(action func(*[]byte) (*[]byte, error),
 
 	f.good = true
 	f.action = action
-	f.log = log
+	f.logger = log.New(logwriter, "gofuse: ",
+	                   log.Lshortfile|log.Lmicroseconds)
 	f.requestTimeout = requestTimeout
 	f.requestTries = requestTries
 	f.recoveryInterval = recoveryInterval
