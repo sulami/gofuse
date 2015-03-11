@@ -12,24 +12,18 @@ func TestSanity(t *testing.T) {
 	}
 }
 
-// Some error we want to return for testing that is just not nil.
-type someError string
-
-func (s someError) Error() string {
-	return string(s)
-}
-
 // Faux action function that returns depending on the length of the byte
 // array we pass.
 // 0    - return success
 // 1    - return failure
 // else - do not return, trigger a timeout
-func FauxAction(in *[]byte) (*[]byte, error) {
+func FauxAction(in *[]byte, out chan []byte) {
 	if len(*in) == 0 {
-		return nil, nil
+		retval := []byte("G")
+		out <- retval
 	} else if len(*in) == 1 {
-		var err someError = "Fail."
-		return nil, err
+		retval := []byte("F")
+		out <- retval
 	} else {
 		for {
 			// Trigger a timeout
@@ -100,5 +94,29 @@ func TestUnblowFuse(t *testing.T) {
 	}
 
 	// TODO check for recovery status
+}
+
+func TestTimeout(t *testing.T) {
+	f := NewFuse(FauxAction, nil, time.Second, 3, 2 * time.Second, 5)
+
+	arg := []byte("timeout")
+	retval := make(chan []byte)
+	timeout := make(chan bool, 1)
+	go func() {
+		time.Sleep(1 * time.Second)
+		timeout <- true
+	}()
+
+	f.Query(&arg, retval)
+
+	// Use another timeout that should time out before the action
+	// returns data. Also because the action never returns data.
+	select {
+	case <-retval:
+		t.Error("Action returned data without being supposed to do so")
+	case <-timeout:
+		// That's actually a good thing™
+	}
+	// TODO check the status -> should be "degraded" or similar
 }
 
