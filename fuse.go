@@ -38,11 +38,23 @@ type Fuse struct {
 // Call the supplied action to determine the current status. Returns a
 // non-nil error if it times out.
 func (f *Fuse) try(in *[]byte, out chan []byte) error {
-	// f.action(in, out)
-	// TODO
-	// start the timeout
-	// wait for a result or the timeout
-	// return the result
+	retval := make(chan []byte)
+	timeout := make(chan bool, 1)
+
+	go func () {
+		time.Sleep(f.requestTimeout)
+		timeout <- false
+	} ()
+
+	go f.action(in, retval)
+
+	select {
+	case <-timeout:
+		return nil // TODO return a non-nil error
+	case r := <-retval:
+		out <- r
+	}
+
 	return nil
 }
 
@@ -103,8 +115,8 @@ func NewFuse(action func(*[]byte, chan []byte),
 func (f *Fuse) Query(in *[]byte, out chan []byte) {
 	err := f.try(in, out)
 	if (err != nil) {
-		// f.log("bad stuff")
-		// perhabs blow
+		f.log("Timeout triggered.")
+		// TODO perhabs blow
 	}
 }
 
