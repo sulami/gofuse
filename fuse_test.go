@@ -117,6 +117,9 @@ func TestTimeout(t *testing.T) {
 	case <-timeout:
 		// That's actually a good thing™
 	}
-	// TODO check the status -> should be "degraded" or similar
+
+	if f.requestFails != 1 {
+		t.Error("requestFails has not been updated properly.")
+	}
 }
 

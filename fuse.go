@@ -24,6 +24,9 @@ type Fuse struct {
 	// blows.
 	requestTries uint
 
+	// How often we already failed in a row.
+	requestFails uint
+
 	// The interval in which we try to contact an offline fuse.
 	recoveryInterval time.Duration
 
@@ -50,6 +53,7 @@ func (f *Fuse) try(in *[]byte, out chan []byte) error {
 
 	select {
 	case <-timeout:
+		f.requestFails++
 		return nil // TODO return a non-nil error
 	case r := <-retval:
 		out <- r
