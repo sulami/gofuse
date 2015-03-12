@@ -19,11 +19,9 @@ func TestSanity(t *testing.T) {
 // else - do not return, trigger a timeout
 func FauxAction(in *[]byte, out chan []byte) {
 	if len(*in) == 0 {
-		retval := []byte("G")
-		out <- retval
+		out <- []byte("S")
 	} else if len(*in) == 1 {
-		retval := []byte("F")
-		out <- retval
+		out <- []byte("F")
 	} else {
 		for {
 			// Trigger a timeout
@@ -97,29 +95,43 @@ func TestUnblowFuse(t *testing.T) {
 }
 
 func TestTimeout(t *testing.T) {
-	f := NewFuse(FauxAction, nil, time.Second, 3, 2 * time.Second, 5)
+	f := NewFuse(FauxAction, nil, 1 * time.Second, 3, 3 * time.Second, 5)
 
-	arg := []byte("timeout")
+	arg := []byte("TIMEOUT TIME")
 	retval := make(chan []byte)
-	timeout := make(chan bool, 1)
+	timeout := make(chan bool)
+
+	// Timeout BEFORE the Fuse-internal timeout should trigger.
 	go func() {
-		time.Sleep(1 * time.Second)
+		time.Sleep(time.Second / 2)
 		timeout <- true
 	}()
+	go f.Query(&arg, retval)
 
-	f.Query(&arg, retval)
-
-	// Use another timeout that should time out before the action
-	// returns data. Also because the action never returns data.
 	select {
 	case <-retval:
-		t.Error("Action returned data without being supposed to do so")
+		t.Error("Action returned data where it was not supposed to.")
+	case <-f.timeout:
+		t.Error("Fuse timeout triggered too early.")
 	case <-timeout:
 		// That's actually a good thing™
 	}
 
-	if f.requestFails != 1 {
-		t.Error("requestFails has not been updated properly.")
+	// Timeout AFTER the Fuse-internal timeout should trigger.
+	go func() {
+		time.Sleep(time.Second * 2)
+		timeout <- true
+	}()
+
+	go f.Query(&arg, retval)
+
+	select {
+	case <-retval:
+		t.Error("Action returned data where it was not supposed to.")
+	case <-f.timeout:
+		// That's actually a good thing™
+	case <-timeout:
+		t.Error("Action did not return data in time.")
 	}
 }
 

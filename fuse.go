@@ -14,8 +14,12 @@ type Fuse struct {
 	action func(*[]byte, chan []byte)
 
 	// Logger to use when logging anything on our own, eg. blown
-	// fusesg
+	// fuses
 	logger *log.Logger
+
+	// Channel to return true on when a timeout is triggered, so
+	// that the user can react and present alternative content.
+	timeout chan bool
 
 	// Timout after which to call a query.
 	requestTimeout time.Duration
@@ -40,13 +44,13 @@ type Fuse struct {
 
 // Call the supplied action to determine the current status. Returns a
 // non-nil error if it times out.
-func (f *Fuse) try(in *[]byte, out chan []byte) error {
+func (f *Fuse) Query(in *[]byte, out chan []byte) {
 	retval := make(chan []byte)
 	timeout := make(chan bool, 1)
 
 	go func () {
 		time.Sleep(f.requestTimeout)
-		timeout <- false
+		timeout <- true
 	} ()
 
 	go f.action(in, retval)
@@ -54,12 +58,11 @@ func (f *Fuse) try(in *[]byte, out chan []byte) error {
 	select {
 	case <-timeout:
 		f.requestFails++
-		return nil // TODO return a non-nil error
-	case r := <-retval:
-		out <- r
+		f.timeout <- true
+		// f.log("Timeout triggered.")
+	case <-retval:
+		out <- []byte("f") // FIXME pass the actual response
 	}
-
-	return nil
 }
 
 // Recovery has succeeded, bring the fuse back online.
@@ -108,20 +111,14 @@ func NewFuse(action func(*[]byte, chan []byte),
 	f.action = action
 	f.logger = log.New(logwriter, "gofuse: ",
 	                   log.Lshortfile|log.Lmicroseconds)
+	f.timeout = make(chan bool, 1)
 	f.requestTimeout = requestTimeout
 	f.requestTries = requestTries
+	f.requestFails = 0
 	f.recoveryInterval = recoveryInterval
 	f.recoveryTries = recoveryTries
 
 	return f
-}
-
-func (f *Fuse) Query(in *[]byte, out chan []byte) {
-	err := f.try(in, out)
-	if (err != nil) {
-		f.log("Timeout triggered.")
-		// TODO perhabs blow
-	}
 }
 
 // TODO
