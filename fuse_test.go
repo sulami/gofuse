@@ -171,3 +171,27 @@ func TestBlowingInUse(t *testing.T) {
 	}
 }
 
+func TestBlownFuseReturnsFast(t *testing.T) {
+	// We make sure a blown fuse returns failure immediately and
+	// does not wait for the timeout.
+	f := NewFuse(FauxAction, nil, 1, time.Second, 2, time.Second, 5)
+	f.good = false
+
+	// Does not matter at all.
+	arg := []byte("TIMEOUT TIME")
+	retval := make(chan []byte)
+
+	timeout := time.After(time.Second / 10)
+	go f.Query(&arg, retval)
+
+	select {
+	case <-f.timeout:
+		// Desired behaviour.
+	case <-retval:
+		// There should be nothing coming out of here.
+		t.Error("Blown fuse sent data.")
+	case <-timeout:
+		t.Error("Blown fuse did not return immediately.")
+	}
+}
+

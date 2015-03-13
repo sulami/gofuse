@@ -45,6 +45,10 @@ type Fuse struct {
 // Call the supplied action to determine the current status. Returns a
 // non-nil error if it times out.
 func (f *Fuse) Query(in *[]byte, out chan []byte) {
+	if !f.good {
+		f.timeout <- true
+	}
+
 	retval := make(chan []byte)
 	timeout := time.After(f.requestTimeout)
 
