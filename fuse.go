@@ -46,12 +46,7 @@ type Fuse struct {
 // non-nil error if it times out.
 func (f *Fuse) Query(in *[]byte, out chan []byte) {
 	retval := make(chan []byte)
-	timeout := make(chan bool, 1)
-
-	go func () {
-		time.Sleep(f.requestTimeout)
-		timeout <- true
-	} ()
+	timeout := time.After(f.requestTimeout)
 
 	go f.action(in, retval)
 
