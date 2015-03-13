@@ -135,3 +135,39 @@ func TestTimeout(t *testing.T) {
 	}
 }
 
+func TestBlowingInUse(t *testing.T) {
+	// This fuse will timeout really quickly and blow after just 2
+	// failures. We use a larger queue size because we do not want
+	// to check the results.
+	f := NewFuse(FauxAction, nil, 10, time.Second / 10, 2, time.Second, 5)
+
+	arg := []byte("TIMEOUT TIME")
+	retval := make(chan []byte)
+
+	// Do not use goroutines to keep track of where we are.
+	if f.requestFails != 0 {
+		t.Error("Wrong baseline.")
+	}
+	if !f.good {
+		t.Error("Fuse is already blown.")
+	}
+
+	f.Query(&arg, retval)
+
+	if f.requestFails != 1 {
+		t.Error("requestFails did not count up to one.")
+	}
+	if !f.good {
+		t.Error("Fuse has blown too early.")
+	}
+
+	f.Query(&arg, retval)
+
+	if f.requestFails != 2 {
+		t.Error("requestFails did not count up to two.")
+	}
+	if f.good {
+		t.Error("Fuse did not blow when it was supposed to.")
+	}
+}
+

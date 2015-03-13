@@ -53,6 +53,9 @@ func (f *Fuse) Query(in *[]byte, out chan []byte) {
 	select {
 	case <-timeout:
 		f.requestFails++
+		if f.requestFails >= f.requestTries {
+			f.blow()
+		}
 		f.timeout <- true
 		// f.log("Timeout triggered.")
 	case <-retval:
