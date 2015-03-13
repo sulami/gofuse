@@ -93,6 +93,7 @@ func (f *Fuse) log(msg string) {
 // Create and initialize a new fuse and return it.
 func NewFuse(action func(*[]byte, chan []byte),
              logwriter io.Writer,
+	     queueSize uint,
              requestTimeout time.Duration,
              requestTries uint,
              recoveryInterval time.Duration,
@@ -106,7 +107,7 @@ func NewFuse(action func(*[]byte, chan []byte),
 	f.action = action
 	f.logger = log.New(logwriter, "gofuse: ",
 	                   log.Lshortfile|log.Lmicroseconds)
-	f.timeout = make(chan bool, 1)
+	f.timeout = make(chan bool, queueSize)
 	f.requestTimeout = requestTimeout
 	f.requestTries = requestTries
 	f.requestFails = 0

@@ -32,7 +32,7 @@ func FauxAction(in *[]byte, out chan []byte) {
 // Test initialization of new fuses.
 func TestNewFuse(t *testing.T) {
 	// TODO use log.Logger
-	f := NewFuse(FauxAction, nil, time.Second, 3, 2 * time.Second, 5)
+	f := NewFuse(FauxAction, nil, 1, time.Second, 3, 2 * time.Second, 5)
 
 	if f == nil {
 		t.Error("Allocation failure.")
@@ -55,7 +55,7 @@ func TestNewFuse(t *testing.T) {
 
 // Test blowing of fuses.
 func TestBlowFuse(t *testing.T) {
-	f := NewFuse(FauxAction, nil, time.Second, 3, 2 * time.Second, 5)
+	f := NewFuse(FauxAction, nil, 1, time.Second, 3, 2 * time.Second, 5)
 
 	if !f.good {
 		t.Error("Fuse is already blown.")
@@ -72,7 +72,7 @@ func TestBlowFuse(t *testing.T) {
 
 // Test unblowing of fuses.
 func TestUnblowFuse(t *testing.T) {
-	f := NewFuse(FauxAction, nil, time.Second, 3, 2 * time.Second, 5)
+	f := NewFuse(FauxAction, nil, 1, time.Second, 3, 2 * time.Second, 5)
 
 	f.blow()
 
@@ -95,7 +95,7 @@ func TestUnblowFuse(t *testing.T) {
 }
 
 func TestTimeout(t *testing.T) {
-	f := NewFuse(FauxAction, nil, 1 * time.Second, 3, 3 * time.Second, 5)
+	f := NewFuse(FauxAction, nil, 1, time.Second / 5, 3, 3 * time.Second, 5)
 
 	arg := []byte("TIMEOUT TIME")
 	retval := make(chan []byte)
@@ -103,7 +103,7 @@ func TestTimeout(t *testing.T) {
 
 	// Timeout BEFORE the Fuse-internal timeout should trigger.
 	go func() {
-		time.Sleep(time.Second / 2)
+		time.Sleep(time.Second / 10)
 		timeout <- true
 	}()
 	go f.Query(&arg, retval)
@@ -119,7 +119,7 @@ func TestTimeout(t *testing.T) {
 
 	// Timeout AFTER the Fuse-internal timeout should trigger.
 	go func() {
-		time.Sleep(time.Second * 2)
+		time.Sleep(time.Second / 2)
 		timeout <- true
 	}()
 
