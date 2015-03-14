@@ -1,6 +1,6 @@
 # GoFuse
 
-A simple curcuit breaker for Go.
+A simple circuit breaker for Go.
 
 ## Usage
 
