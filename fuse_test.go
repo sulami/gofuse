@@ -1,6 +1,7 @@
 package fuse
 
 import (
+	"bytes"
 	"testing"
 	"time"
 )
@@ -29,10 +30,20 @@ func FauxAction(in *[]byte, out chan []byte) {
 	}
 }
 
+// This is a writer for our logger that simply stores the last written
+// string in itself.
+type FauxLogWriter string
+
+func (f FauxLogWriter) Write(p []byte) (int, error) {
+	n := bytes.Index(p, []byte{0})
+	f = FauxLogWriter(string(p[:n]))
+	return n, nil
+}
+
 // Test initialization of new fuses.
 func TestNewFuse(t *testing.T) {
-	// TODO use log.Logger
-	f := NewFuse(FauxAction, nil, 1, time.Second, 3, 2 * time.Second, 5)
+	var w FauxLogWriter
+	f := NewFuse(FauxAction, w, 1, time.Second, 3, 2 * time.Second, 5)
 
 	if f == nil {
 		t.Error("Allocation failure.")
@@ -55,7 +66,8 @@ func TestNewFuse(t *testing.T) {
 
 // Test blowing of fuses.
 func TestBlowFuse(t *testing.T) {
-	f := NewFuse(FauxAction, nil, 1, time.Second, 3, 2 * time.Second, 5)
+	var w FauxLogWriter
+	f := NewFuse(FauxAction, w, 1, time.Second, 3, 2 * time.Second, 5)
 
 	if !f.good {
 		t.Error("Fuse is already blown.")
@@ -72,7 +84,8 @@ func TestBlowFuse(t *testing.T) {
 
 // Test unblowing of fuses.
 func TestUnblowFuse(t *testing.T) {
-	f := NewFuse(FauxAction, nil, 1, time.Second, 3, 2 * time.Second, 5)
+	var w FauxLogWriter
+	f := NewFuse(FauxAction, w, 1, time.Second, 3, 2 * time.Second, 5)
 
 	f.blow()
 
@@ -95,7 +108,8 @@ func TestUnblowFuse(t *testing.T) {
 }
 
 func TestTimeout(t *testing.T) {
-	f := NewFuse(FauxAction, nil, 1, time.Second / 5, 3, 3 * time.Second, 5)
+	var w FauxLogWriter
+	f := NewFuse(FauxAction, w, 1, time.Second / 5, 3, 3 * time.Second, 5)
 
 	arg := []byte("TIMEOUT TIME")
 	retval := make(chan []byte)
@@ -139,7 +153,8 @@ func TestBlowingInUse(t *testing.T) {
 	// This fuse will timeout really quickly and blow after just 2
 	// failures. We use a larger queue size because we do not want
 	// to check the results.
-	f := NewFuse(FauxAction, nil, 10, time.Second / 10, 2, time.Second, 5)
+	var w FauxLogWriter
+	f := NewFuse(FauxAction, w, 10, time.Second / 10, 2, time.Second, 5)
 
 	arg := []byte("TIMEOUT TIME")
 	retval := make(chan []byte)
@@ -174,7 +189,8 @@ func TestBlowingInUse(t *testing.T) {
 func TestBlownFuseReturnsFast(t *testing.T) {
 	// We make sure a blown fuse returns failure immediately and
 	// does not wait for the timeout.
-	f := NewFuse(FauxAction, nil, 1, time.Second, 2, time.Second, 5)
+	var w FauxLogWriter
+	f := NewFuse(FauxAction, w, 1, time.Second, 2, time.Second, 5)
 	f.good = false
 
 	// Does not matter at all.
