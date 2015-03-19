@@ -62,8 +62,8 @@ func (f *Fuse) Query(in *[]byte, out chan []byte) {
 		}
 		f.timeout <- true
 		// f.log("Timeout triggered.")
-	case <-retval:
-		out <- []byte("f") // FIXME pass the actual response
+	case r := <-retval:
+		out <- r
 	}
 }
 
@@ -101,7 +101,7 @@ func (f *Fuse) log(msg string) {
 // Create and initialize a new fuse and return it.
 func NewFuse(action func(*[]byte, chan []byte),
              logwriter io.Writer,
-	     queueSize uint,
+             queueSize uint,
              requestTimeout time.Duration,
              requestTries uint,
              recoveryInterval time.Duration,

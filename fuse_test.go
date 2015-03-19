@@ -217,3 +217,24 @@ func TestBlownFuseReturnsFast(t *testing.T) {
 	}
 }
 
+func TestSuccessfulQuery(t *testing.T) {
+	// Perform a successful query and verify that the result comes
+	// back to us properly.
+	w := NewFauxLogWriter()
+	f := NewFuse(FauxAction, w, 1, time.Second, 2, time.Second, 5)
+
+	// len() == 0 == success
+	arg := []byte("")
+	retval := make(chan []byte)
+	go f.Query(&arg, retval)
+
+	select {
+	case <-f.timeout:
+		t.Error("Fuse timed out when it should not have.")
+	case r := <-retval:
+		if r[0] != byte('S') {
+			t.Error("Fuse did not pass through the answer.")
+		}
+	}
+}
+
