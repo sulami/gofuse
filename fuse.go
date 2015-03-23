@@ -42,13 +42,7 @@ type Fuse struct {
 	recoverySuccesses uint
 }
 
-// Call the supplied action to determine the current status. Returns a
-// non-nil error if it times out.
-func (f *Fuse) Query(in *[]byte, out chan []byte) {
-	if !f.good {
-		f.timeout <- true
-	}
-
+func (f *Fuse) try(in *[]byte, out chan []byte) bool {
 	retval := make(chan []byte)
 	timeout := time.After(f.requestTimeout)
 
@@ -56,14 +50,28 @@ func (f *Fuse) Query(in *[]byte, out chan []byte) {
 
 	select {
 	case <-timeout:
+		return false
+	case r := <-retval:
+		out <- r
+		return true
+	}
+}
+
+// Call the supplied action to determine the current status. Returns a
+// non-nil error if it times out.
+func (f *Fuse) Query(in *[]byte, out chan []byte) {
+	if !f.good {
+		f.timeout <- true
+	}
+
+	rv := f.try(in, out)
+	if !rv {
 		f.requestFails++
 		if f.requestFails >= f.requestTries {
 			f.blow()
 		}
 		f.timeout <- true
 		// f.log("Timeout triggered.")
-	case r := <-retval:
-		out <- r
 	}
 }
 
