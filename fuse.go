@@ -11,7 +11,7 @@ type Fuse struct {
 	good bool
 
 	// Function to execute to try to get a positive response.
-	action func(*[]byte, chan []byte)
+	action func([]byte, chan []byte)
 
 	// Logger to use when logging anything on our own, eg. blown
 	// fuses
@@ -42,7 +42,7 @@ type Fuse struct {
 	recoverySuccesses uint
 }
 
-func (f *Fuse) try(in *[]byte, out chan []byte) bool {
+func (f *Fuse) try(in []byte, out chan []byte) bool {
 	retval := make(chan []byte)
 	timeout := time.After(f.requestTimeout)
 
@@ -59,7 +59,7 @@ func (f *Fuse) try(in *[]byte, out chan []byte) bool {
 
 // Call the supplied action to determine the current status. Returns a
 // non-nil error if it times out.
-func (f *Fuse) Query(in *[]byte, out chan []byte) {
+func (f *Fuse) Query(in []byte, out chan []byte) {
 	if !f.good {
 		f.timeout <- true
 	}
@@ -107,7 +107,7 @@ func (f *Fuse) log(msg string) {
 }
 
 // Create and initialize a new fuse and return it.
-func NewFuse(action func(*[]byte, chan []byte),
+func NewFuse(action func([]byte, chan []byte),
              logwriter io.Writer,
              queueSize uint,
              requestTimeout time.Duration,

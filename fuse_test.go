@@ -17,10 +17,10 @@ func TestSanity(t *testing.T) {
 // 0    - return success
 // 1    - return failure
 // else - do not return, trigger a timeout
-func FauxAction(in *[]byte, out chan []byte) {
-	if len(*in) == 0 {
+func FauxAction(in []byte, out chan []byte) {
+	if len(in) == 0 {
 		out <- []byte("S")
-	} else if len(*in) == 1 {
+	} else if len(in) == 1 {
 		out <- []byte("F")
 	} else {
 		for {
@@ -117,7 +117,6 @@ func TestTimeout(t *testing.T) {
 	w := NewFauxLogWriter()
 	f := NewFuse(FauxAction, w, 1, time.Second / 5, 3, 3 * time.Second, 5)
 
-	arg := []byte("TIMEOUT TIME")
 	retval := make(chan []byte)
 	timeout := make(chan bool)
 
@@ -126,7 +125,7 @@ func TestTimeout(t *testing.T) {
 		time.Sleep(time.Second / 10)
 		timeout <- true
 	}()
-	go f.Query(&arg, retval)
+	go f.Query([]byte("TIMEOUT"), retval)
 
 	select {
 	case <-retval:
@@ -143,7 +142,7 @@ func TestTimeout(t *testing.T) {
 		timeout <- true
 	}()
 
-	go f.Query(&arg, retval)
+	go f.Query([]byte("TIMEOUT"), retval)
 
 	select {
 	case <-retval:
@@ -162,7 +161,6 @@ func TestBlowingInUse(t *testing.T) {
 	w := NewFauxLogWriter()
 	f := NewFuse(FauxAction, w, 10, time.Second / 10, 2, time.Second, 5)
 
-	arg := []byte("TIMEOUT TIME")
 	retval := make(chan []byte)
 
 	// Do not use goroutines to keep track of where we are.
@@ -173,7 +171,7 @@ func TestBlowingInUse(t *testing.T) {
 		t.Error("Fuse is already blown.")
 	}
 
-	f.Query(&arg, retval)
+	f.Query([]byte("TIMEOUT"), retval)
 
 	if f.requestFails != 1 {
 		t.Error("requestFails did not count up to one.")
@@ -182,7 +180,7 @@ func TestBlowingInUse(t *testing.T) {
 		t.Error("Fuse has blown too early.")
 	}
 
-	f.Query(&arg, retval)
+	f.Query([]byte("TIMEOUT"), retval)
 
 	if f.requestFails != 2 {
 		t.Error("requestFails did not count up to two.")
@@ -200,11 +198,10 @@ func TestBlownFuseReturnsFast(t *testing.T) {
 	f.good = false
 
 	// Does not matter at all.
-	arg := []byte("TIMEOUT TIME")
 	retval := make(chan []byte)
 
 	timeout := time.After(time.Second / 10)
-	go f.Query(&arg, retval)
+	go f.Query([]byte("TIMEOUT TIME"), retval)
 
 	select {
 	case <-f.timeout:
@@ -223,10 +220,10 @@ func TestSuccessfulQuery(t *testing.T) {
 	w := NewFauxLogWriter()
 	f := NewFuse(FauxAction, w, 1, time.Second, 2, time.Second, 5)
 
-	// len() == 0 == success
-	arg := []byte("")
 	retval := make(chan []byte)
-	go f.Query(&arg, retval)
+
+	// len() == 0 == success
+	go f.Query([]byte(""), retval)
 
 	select {
 	case <-f.timeout:

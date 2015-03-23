@@ -11,7 +11,7 @@ To use GoFuse in your application, after importing it where needed of course,
 you will need to provide a couple of things:
 
 ```go
-func Action(in *[]byte, out chan []byte) {
+func Action(in []byte, out chan []byte) {
 	// A query function that describes how we pass a query to the service
 	// we are trying to contact and pushes the answer back into a channel.
 }
@@ -48,11 +48,8 @@ Then you can use the fuse like this:
 // prepare a channel to return the data on
 retchan := make(chan []byte)
 
-// prepare the arguments we send with the query
-args := []byte("This is some data.")
-
 // start the query
-go f.Query(&args, retchan)
+go f.Query([]byte("This is some data"), retchan)
 
 // see what happens
 select {
